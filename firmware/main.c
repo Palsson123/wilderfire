@@ -1,29 +1,10 @@
-//MSP430 UART Example
-//http://msp430.gorillaembedded.com
-// By Silver Back [Gorilla Embedded ]
 // MSP430G2553 P1.1 and P1.2 as TX and RX
-
-
-
+// make all
+// MSP430Flasher.exe -n msp430g2xx3 -w "main.hex" -v -z [VCC] -m SBW2
 #include "msp430g2553.h"
 
-//function prototype
-
-void send_uart(char *data);
-
-
-
-void main( void )
+void uart_init()
 {
-   //Initialization
-
-    WDTCTL = WDTPW + WDTHOLD;               // Stop WDT , not used
-   
-   //Calibrate DCO 
-    BCSCTL1 = CALBC1_1MHZ;                  // DCO at 1 MHz
-    DCOCTL = CALDCO_1MHZ;                   // DCO at 1 MHz
-  
-   // UART Set-Up
     P1SEL |= 0x06;                       // Use P1.1 and P1.2 as USCI_A0
     P1SEL2|= 0x06;                        // Use P1.1 and P1.2 as USCI_A0
     P1DIR |= 0x04;                          // Set 1.2 as output
@@ -32,29 +13,17 @@ void main( void )
     UCA0BR1 = 0;                            // 1 MHz -> 9600
     UCA0MCTL = UCBRS1;                      // Modulation UCBRSx = 1
     UCA0CTL1 &= ~UCSWRST;                   // **Initialize USCI  
-
-   //Indicator LED 
-    P1DIR |= BIT6;
-
-    //General Interrupt Enable
-      _BIS_SR(GIE);
-      
-
-
-    
-    //Repeat  this section
-    
-    while(1)
-    {
-      send_uart("ATD0046706948464\r");
-     __delay_cycles(500000);
-     while(1)
-     {
-     }
-    }
+}
+void freq_init()
+{
+    BCSCTL1 = CALBC1_1MHZ;                  // DCO at 1 MHz
+    DCOCTL = CALDCO_1MHZ;                   // DCO at 1 MHz
 }
 
-
+void led_init()
+{
+    P1DIR |= BIT6;
+}
 
 void send_uart(char *data)
 {
@@ -63,9 +32,25 @@ void send_uart(char *data)
     unsigned int i;
     unsigned int size = strlen(data);      //get length of data to be sent
     for (i = 0; i < size; i++) {
-        
         while (!(IFG2 & UCA0TXIFG));      //Wait UART to finish before next send
         UCA0TXBUF = data[i];
-                    }
+    }
+}
 
+void main( void )
+{
+    WDTCTL = WDTPW + WDTHOLD;
+
+    freq_init();
+    uart_init();
+    led_init();
+    _BIS_SR(GIE); // interupt enable
+    while(1)
+    {
+        send_uart("ATD0046706948464\r");
+        __delay_cycles(500000);
+        while(1)
+        {
+        }
+    }
 }
