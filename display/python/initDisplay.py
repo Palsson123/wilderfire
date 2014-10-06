@@ -237,7 +237,7 @@ def HX_SETGAMMA():
 
 def HX_COLMOD():
 	WriteCmd(HX8357_COLMOD)
-	WriteByte(0x55)
+	WriteByte(0x07) #Sets 16-bit color mode
 	
 def HX_MADCTL():
 	WriteCmd(HX8357_MADCTL)
