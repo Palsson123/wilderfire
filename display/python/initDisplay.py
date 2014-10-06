@@ -386,12 +386,25 @@ def drawImage(x,y,imageName):
 	pix = im.load()
 	width = im.size[1]
 	height = im.size[0]
-	for x in range(0, height):
-		for y in range(0, width):
-			color =  (pix[x,y][0]<<16) & 0xff0000 
-			color += (pix[x,y][1]<<8) & 0x00ff00
-			color  += pix[x,y][2]
-			FillRect(x,y,x+1,y+1,color)
+	pixels = []
+	for y in range(0, width):
+		a = []
+		for x in range(0, height):
+			a.append(pix[x,y][0])
+			a.append(pix[x,y][1])
+			a.append(pix[x,y][2])
+		pixels.append(a)
+	SetAddrWindow(0,0,height-1,width-1)
+	WriteCmd(RAMWR)
+	SetPin(DC,1)
+	for pixel in pixels:
+		spi.writebytes(pixel)
+#	for pixel in pixels:
+#		red = pixel>>16 #red = upper 8 bits
+#		green = (pixel>>8) & 0xFF #green = middle 8 bits
+#		blue = pixel & 0xFF #blue = lower 8 bits
+#		RGB = [red,green,blue] #assemble RGB as= byte list		
+#		spi.writebytes(RGB)
 	#print pix[x,y]
 ########################################################################
 #
@@ -415,11 +428,11 @@ print "Adafruit 1.8 TFT display demo with hardware SPI"
 spi = spidev.SpiDev()
 spi.open(0,0)
 spi.mode = 0
-spi.max_speed_hz = 27777000
+spi.max_speed_hz = 25000000
 InitIO()
 InitDisplay()
 TimeDisplay()
-#drawImage(0,0, "b.jpg")
+drawImage(0,0, "b.png")
 spi.close()
 print "Done."
 # END ###############################################################
