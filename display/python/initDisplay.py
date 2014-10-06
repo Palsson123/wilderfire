@@ -16,6 +16,7 @@
 import RPi.GPIO as GPIO
 import time
 import spidev #hardware SPI
+GPIO.setmode(GPIO.BOARD)
 #TFT to RPi connections
 # PIN TFT RPi
 # 1 backlight=V3
@@ -47,7 +48,7 @@ MADCTL = 0x36 #axis control
 COLMOD = 0x3A #color mode
 
 
-## KONSTANTER RÅN C-PROJEKTET
+## KONSTANTER
 HX8357D = 0xD
 HX8357B = 0xB
 
@@ -116,12 +117,11 @@ HX8357B_RDID2  = 0xDB
 HX8357B_RDID3  = 0xDC
 HX8357B_RDID4  = 0xDD
 
-HX8357D_SETGAMM A= 0xE0
+HX8357D_SETGAMMA = 0xE0
 
 HX8357B_SETGAMMA = 0xC8
 HX8357B_SETPANELRELATED = 0xE9
 
-// Color definitions
 HX8357_BLACK  = 0x0000
 HX8357_BLUE   = 0x001F
 HX8357_RED    = 0xF800
@@ -219,7 +219,7 @@ def HX_SETGAMMA():
 	WriteByte(0x02)
 	WriteByte(0x0A)
 	WriteByte(0x11)
-	WriteByte(0x1d,
+	WriteByte(0x1d)
 	WriteByte(0x23)
 	WriteByte(0x35)
 	WriteByte(0x41)
@@ -373,10 +373,10 @@ def FillRect(x0,y0,x1,y1,color):
 	Write888(color,width,height)
 def FillScreen(color):
 	"Fills entire screen with given color"
-	FillRect(0,0,127,159,color)
+	FillRect(0,0,HX8357_TFTWIDTH-1,HX8357_TFTHEIGHT-1,color)
 def ClearScreen():
 	"Fills entire screen with black"
-	FillRect(0,0,127,159,BLACK)
+	FillRect(0,0,HX8357_TFTWIDTH-1,HX8357_TFTHEIGHT-1,BLACK)
 ########################################################################
 #
 # Testing routines:
@@ -395,24 +395,14 @@ def TimeDisplay():
 #
 # Main Program
 #
-	print "Adafruit 1.8 TFT display demo with hardware SPI"
-	spi = spidev.SpiDev()
-	spi.open(0,0)
-	spi.mode = 0
-	InitIO()
-	InitDisplay()
-	TimeDisplay()
-	spi.close()
-	print "Done."
+print "Adafruit 1.8 TFT display demo with hardware SPI"
+spi = spidev.SpiDev()
+spi.open(0,0)
+spi.mode = 0
+InitIO()
+InitDisplay()
+TimeDisplay()
+FillRect(10,10,50,50,BLUE)
+spi.close()
+print "Done."
 # END ###############################################################
-
-
-
-
-
-
-
-
-
-
-
