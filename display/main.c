@@ -16,8 +16,10 @@ GPIO.setmode(GPIO.BOARD)*/
 # 9 VCC=V3
 # 10 GND GND
 */
-#include <avr/io.h>
-#include <util/delay.h>
+//#include <avr/io.h>
+//#include <util/delay.h>
+#include "spi.h"
+int spi_cs_fd;
 //#include <spi.h>
 //volatile uint8_t data;
 
@@ -130,19 +132,11 @@ GPIO.setmode(GPIO.BOARD)*/
 #define true 1
 #define false 0
 
-/*void _delay_ms(uint8_t ms)
+/*void spi_tranceiver (uint8_t data)
 {
-	// do whatever
-}*/
-void spi_tranceiver (uint8_t data)
-{
-    // Load data into the buffer
-    /*SPDR = data;
-    while(!((SPSR)&(1<<SPIF)));*/
-
     SPDR = data;                 // send the data
     while(!(SPSR & (1<<SPIF)));  // wait until transmission is complete
-}
+}*/
 
 void InitSPI()
 {
@@ -162,15 +156,13 @@ void InitSPI()
 void SetPin(uint8_t pinNumber, uint8_t value)
 {
 	PORTC = (value << pinNumber);
-	//sets the GPIO pin to desired value (1=on,0=off)
-
-	//output(pinNumber,value)
 }
 
 void WriteByte(uint8_t value, uint8_t data)
 {
 	SetPin(DC, data);
-	spi_tranceiver(value);
+	//spi_tranceiver(value);
+	transfer(fd, data, 0); // *data?
 }
 
 void WriteCmd(uint8_t value)
@@ -190,7 +182,6 @@ void HX_SETC()
 	WriteByte(0x83, true);
 	WriteByte(0x57, true);
 	_delay_ms(300);
-
 }
 
 void HX_SETRGB()
@@ -329,24 +320,6 @@ void HX_DISPON()
 	WriteCmd(HX8357_DISPON);
 	_delay_ms(50);
 }
-// Low-level routines
-// These routines access GPIO directly
-
-
-
-/*void InitIO()
-{
-	GPIO.setmode(GPIO.BCM)
-	GPIO.setwarnings(false)
-	GPIO.setup(DC,GPIO.OUT)
-}*/
-
-//Hardware SPI routines
-
-//Function to send and receive data for both master and slave
-
-
-
 //"Send command byte to display"
 void WriteWord (uint16_t value)
 {
@@ -354,7 +327,6 @@ void WriteWord (uint16_t value)
 	WriteByte(value >> 8, true); //write upper 8 bits
 	WriteByte(value & 0xFF, true); //write lower 8 bits
 }
-
 
 void WriteList (uint8_t byteList[], uint8_t size)
 {
@@ -398,7 +370,6 @@ void InitDisplay()
 	HX_SLPOUT();
 	HX_DISPON();
 }
-
 
 void SetAddrWindow(uint16_t x0, uint16_t y0, uint16_t x1, uint16_t y1)
 {
@@ -460,58 +431,22 @@ void SetPixel()
 
 int main(void)
 {
-	//_delay_ms(4000);
-	//DDRC = (1 << pinNumber);
-	/*spi = spidev.SpiDev()
-	spi.open(0, 0)
-	spi.mode = 0*/
-	InitSPI();
-	//SetPin(DC, 1);
-	//InitIO();
-	//PORTC = (1 << DC);
-	InitDisplay();
-	SetPixel();
-	
-	/*WriteByte(0x00, true);
-	_delay_ms(1);
-	WriteByte(0x01, true);//
-	_delay_ms(1);
-	WriteByte(0x02, true);
-	_delay_ms(1);
-	WriteByte(0x03, true);//
-	_delay_ms(1);
-	WriteByte(0x04, true);
-	_delay_ms(1);
-	WriteByte(0x05, true);//
-	_delay_ms(1);
-	WriteByte(0x06, true);
-	_delay_ms(1);
-	WriteByte(0x07, true);//
-	_delay_ms(1);
-	WriteByte(0x08, true);
-	_delay_ms(1);
-	WriteByte(0x09, true);//
-	_delay_ms(1);
-	WriteByte(0x0A, true);
-	_delay_ms(1);
-	WriteByte(0x0B, true);//
-	_delay_ms(1);
-	WriteByte(0x0C, true);
-	_delay_ms(1);
-	WriteByte(0x0D, true);//
-	_delay_ms(1);
-	WriteByte(0x0E, true);
-	_delay_ms(1);
-	WriteByte(0x0F, true);//
-	_delay_ms(1);*/
-	//WriteByte(0x00, true);
+	spi_cs_fd = open(std::string("/dev/spidev0.1").c_str(), O_RDWR);
+	//InitSPI();
+	//InitDisplay();
 	
 
+	//void pabort(const char *s);
+	//spi_set_mode(spi_cs_fd, 0);
+	//spi_set_word(int, int);
+	//spi_set_speed(int, int);
+	//spi_set_delay(int);
+	//spiOpen(const char*);
+	//spiClose(int);
+	spi_init(spiOpen("/dev/spidev0.1"));
+	printSpiDetails();
+	//SetPixel();
 
-	//TimeDisplay()
-	//FillRect(10,10,50,50,BLUE);
-	//spi.close()
-	//print "Done."
 	for(;;)
 	{
 
