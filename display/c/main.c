@@ -1,4 +1,3 @@
-
 /*import RPi.GPIO as GPIO
 import time
 import spidev #hardware SPI
@@ -18,14 +17,16 @@ GPIO.setmode(GPIO.BOARD)*/
 */
 //#include <avr/io.h>
 //#include <util/delay.h>
+#include <wiringPi.h>
 #include "spi.h"
+#include <linux/spi/spidev.h>
+
 int spi_cs_fd;
 //#include <spi.h>
 //volatile uint8_t data;
 
-#define DC PC0	// change to whatever port
-#define SCK PB5
-#define MOSI PB3
+#define DC 0	// change to whatever port
+
 //DC = 25 // gpio 25 change this
 //RGB888 Color constants
 #define BLACK 0x000000
@@ -129,40 +130,18 @@ int spi_cs_fd;
 #define HX8357_YELLOW  0xFFE0  
 #define HX8357_WHITE   0xFFFF
 
-#define true 1
-#define false 0
-
-/*void spi_tranceiver (uint8_t data)
-{
-    SPDR = data;                 // send the data
-    while(!(SPSR & (1<<SPIF)));  // wait until transmission is complete
-}*/
-
-void InitSPI()
-{
-	 // Set MOSI, SCK as Output
-	DDRC = (1 << DC); // set DC as output
-	
-	/*DDRB = (1<< PB3) | (1<< PB5 | (1 << PB2));
-    SPCR = (1 << SPE) | (1 << MSTR) | (1 << SPR0); // SPR0 sets prescaler*/
-    DDRB |= (1<<2)|(1<<3)|(1<<5);    // SCK, MOSI and SS as outputs
-    DDRB &= ~(1<<4);                 // MISO as input
-
-    SPCR |= (1<<MSTR);               // Set as Master
-    SPCR |= (1<<SPR0)|(1<<SPR1);     // divided clock by 128
-    SPCR |= (1<<SPE);                // Enable SPI
-}
+#define true HIGH
+#define false LOW
 
 void SetPin(uint8_t pinNumber, uint8_t value)
 {
-	PORTC = (value << pinNumber);
+	digitalWrite(pinNumber, value);
 }
-
 void WriteByte(uint8_t value, uint8_t data)
 {
 	SetPin(DC, data);
-	//spi_tranceiver(value);
-	transfer(fd, data, 0); // *data?
+	uint8_t temp;
+	transfer(spi_cs_fd, &value, &temp);
 }
 
 void WriteCmd(uint8_t value)
@@ -181,7 +160,7 @@ void HX_SETC()
 	WriteByte(0xFF, true);
 	WriteByte(0x83, true);
 	WriteByte(0x57, true);
-	_delay_ms(300);
+	delay(300);
 }
 
 void HX_SETRGB()
@@ -312,13 +291,13 @@ void HX_TEARLINE()
 void HX_SLPOUT()
 {
 	WriteCmd(HX8357_SLPOUT);
-	_delay_ms(150);
+	delay(150);
 }
 
 void HX_DISPON()
 {
 	WriteCmd(HX8357_DISPON);
-	_delay_ms(50);
+	delay(50);
 }
 //"Send command byte to display"
 void WriteWord (uint16_t value)
@@ -328,14 +307,14 @@ void WriteWord (uint16_t value)
 	WriteByte(value & 0xFF, true); //write lower 8 bits
 }
 
-void WriteList (uint8_t byteList[], uint8_t size)
+/*void WriteList (uint8_t byteList[], uint8_t size)
 {
 	//"Send list of bytes to display, as data"
 	int i;
 	for (i = 0; i < size; i++){
 		WriteByte(byteList[i], true);
 	}
-}
+}*/
 
 
 void Write888(uint32_t value, uint8_t width, uint8_t count)
@@ -421,21 +400,21 @@ void FillRect(uint8_t x0, uint8_t y0, uint8_t x1, uint8_t y1, uint32_t color)
 
 void SetPixel()
 {
-	SetAddrWindow(20, 20, 21, 21);
+	SetAddrWindow(0, 0, 1, 1);
 	WriteCmd(RAMWR);
-	PORTC = (1 << PC0);
+	digitalWrite(DC, HIGH);
 	WriteByte(0xFF, true);
-	WriteByte(0x00, true);
+	WriteByte(0xFF, true);
 	WriteByte(0x00, true);
 }
 
 int main(void)
 {
-	spi_cs_fd = open(std::string("/dev/spidev0.1").c_str(), O_RDWR);
+	//spi_cs_fd = open(std::string("/dev/spidev0.1").c_str(), O_RDWR);
 	//InitSPI();
 	//InitDisplay();
-	
-
+	wiringPiSetup();
+	pinMode(0, OUTPUT);
 	//void pabort(const char *s);
 	//spi_set_mode(spi_cs_fd, 0);
 	//spi_set_word(int, int);
@@ -443,9 +422,10 @@ int main(void)
 	//spi_set_delay(int);
 	//spiOpen(const char*);
 	//spiClose(int);
-	spi_init(spiOpen("/dev/spidev0.1"));
+	spi_cs_fd = (spiOpen("/dev/spidev0.0"));
+	spi_init(spi_cs_fd);
 	printSpiDetails();
-	//SetPixel();
+	SetPixel();
 
 	for(;;)
 	{

@@ -6,7 +6,6 @@ uint8_t spi_mode = 0;
 uint8_t spi_bits = 8;
 uint32_t spi_speed = 500000;
 uint16_t spi_delay = 0;
-uint16_t spi_cs_fd = open(std::string("/dev/spidev0.1").c_str(), O_RDWR);
 
 
 //prints error message and aborts. (exits)
@@ -173,14 +172,14 @@ void spi_init(int fd)
 /*
  * prints detail on mode. speed and word size.
  * */
-#ifdef DEBUG
+
 void printSpiDetails()
 {
 	printf("spi mode: %d\n", spi_mode);
 	printf("bits per word: %d\n", spi_bits);
 	printf("max speed: %d Hz (%d KHz)\n", spi_speed, spi_speed/1000);
 }
-#endif
+
 //closes device with descriptor fd.
 int spiClose(int fd)
 {

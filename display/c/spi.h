@@ -74,8 +74,8 @@ void spi_init(int);
 
 #ifdef DEBUG
 void loopbackTest(int);
-void printSpiDetails();
 #endif
+void printSpiDetails();
 
 #endif
 
