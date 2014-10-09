@@ -19,7 +19,6 @@ GPIO.setmode(GPIO.BOARD)*/
 //#include <util/delay.h>
 #include <wiringPi.h>
 #include "spi.h"
-#include <linux/spi/spidev.h>
 
 int spi_cs_fd;
 //#include <spi.h>
@@ -137,13 +136,13 @@ void SetPin(uint8_t pinNumber, uint8_t value)
 {
 	digitalWrite(pinNumber, value);
 }
+uint8_t temp = 0;
 void WriteByte(uint8_t value, uint8_t data)
 {
 	SetPin(DC, data);
-	uint8_t temp;
+//	uint8_t temp;
 	transfer(spi_cs_fd, &value, &temp);
 }
-
 void WriteCmd(uint8_t value)
 {
 	WriteByte(value, false); //set D/C line to 0 = command
@@ -400,12 +399,13 @@ void FillRect(uint8_t x0, uint8_t y0, uint8_t x1, uint8_t y1, uint32_t color)
 
 void SetPixel()
 {
-	SetAddrWindow(0, 0, 1, 1);
+	SetAddrWindow(1, 1,2,2);
 	WriteCmd(RAMWR);
-	digitalWrite(DC, HIGH);
-	WriteByte(0xFF, true);
 	WriteByte(0xFF, true);
 	WriteByte(0x00, true);
+	WriteByte(0x00, true);
+		
+	
 }
 
 int main(void)
@@ -425,6 +425,7 @@ int main(void)
 	spi_cs_fd = (spiOpen("/dev/spidev0.0"));
 	spi_init(spi_cs_fd);
 	printSpiDetails();
+	InitDisplay();
 	SetPixel();
 
 	for(;;)

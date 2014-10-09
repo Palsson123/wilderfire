@@ -99,7 +99,6 @@ int transfer(int fd, uint8_t *data, uint8_t *receive)
 	ret = ioctl(fd, SPI_IOC_MESSAGE(1), &tr);
 	if(ret < 1)
 		pabort("can't send spi message");
-		
 	#ifdef DEBUG
 	printf("Received: ");
 	for(i = 0;i<SPI_BUFFER_SIZE;i++)

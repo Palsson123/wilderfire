@@ -448,51 +448,20 @@ def TimeDisplay():
 #
 # Main Program
 #
-def homeScreen():
-	twittericon = loadImage("twitter.png")
-	facebookicon = loadImage("facebook.png")
-	cameraicon = loadImage("camera.png")
-	gmailicon = loadImage("gmail.png")
-	mapsicon = loadImage("maps.png")
-	placeholdericon = loadImage("placeholder.png")
-	menuicon = loadImage("menu.png")
-	#Background
-	FillRect(0,0,319,479, 0x262626)
-	#first row
-	FillRect(14,14, 14+88, 14+88,0xef5b33)
-	drawImage(14+14+88, 14, twittericon)
-	FillRect(14+14+14+88+88,14,14+14+14+88+88+88,14+88,0xf4b658)
-	#second row
-	drawImage(14,14+88+14, facebookicon)
-	FillRect(116,116,116+88,116+88, 0x8bbeb2)
-	FillRect(218,116,218+88,116+88, 0xf2625d)	
-	#Third row
-	FillRect(14,219,14+40,219+40,0xef5b33)	
-	drawImage(62,218,cameraicon)
-	FillRect(14, 267, 14+40, 267+40, 0xf4b658)
-	FillRect(62,266,62+40,266+40,0x50483c)
-	FillRect(116,218,116+88,218+88,0x50483c)
-	drawImage(218,218,gmailicon)
-	#forth row
-	drawImage(14,319,mapsicon)
-	drawImage(116, 318, placeholdericon)
-	#menu
-	drawImage(0,417,menuicon)
 
+def init():
+	print "Adafruit 1.8 TFT display demo with hardware SPI"
+	global spi 
+	spi = spidev.SpiDev()
+	spi.open(0,0)
+	spi.mode = 0
+	spi.max_speed_hz = 25000000
 
-print "Adafruit 1.8 TFT display demo with hardware SPI"
-spi = spidev.SpiDev()
-spi.open(0,0)
-spi.mode = 0
-spi.max_speed_hz = 25000000
-InitIO()
-InitDisplay()
-TimeDisplay()
+	InitIO()
+	InitDisplay()
+	TimeDisplay()
 
-#homeScreen()
-#drawImage(0,0, "b.png")
-#ab = loadImage("b.png")
-#drawImage(0,0,ab)
-spi.close()
+def close():
+	spi.close()
 print "Done."
 # END ###############################################################
