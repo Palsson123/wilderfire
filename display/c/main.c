@@ -18,7 +18,19 @@ GPIO.setmode(GPIO.BOARD)*/
 //#include <avr/io.h>
 //#include <util/delay.h>
 #include <wiringPi.h>
-#include "spi.h"
+//#include "spi.h"
+#include <wiringPiSPI.h>
+//---------------------------
+#include <stdint.h>
+#include <unistd.h>
+#include <stdio.h>
+#include <stdlib.h>
+#include <getopt.h>
+#include <fcntl.h>
+#include <sys/ioctl.h>
+#include <linux/types.h>
+#include <linux/spi/spidev.h>
+//------------------------------
 
 int spi_cs_fd;
 //#include <spi.h>
@@ -53,10 +65,10 @@ int spi_cs_fd;
 #define HX8357_TFTWIDTH 320
 #define HX8357_TFTHEIGHT 480
 
-#define HX8357B_NOP 0x00
+#define HX8357B_NOP     0x00
 #define HX8357B_SWRESET 0x01
-#define HX8357B_RDDID  0x04
-#define HX8357B_RDDST  0x09
+#define HX8357B_RDDID   0x04
+#define HX8357B_RDDST   0x09
 
 #define HX8357B_RDPOWMODE  0x0A
 #define HX8357B_RDMADCTL  0x0B
@@ -69,7 +81,7 @@ int spi_cs_fd;
 #define HX8357B_PTLON   0x12
 #define HX8357B_NORON   0x13
 
-#define HX8357_INVOFF 0x20
+#define HX8357_INVOFF  0x20
 #define HX8357_INVON   0x21
 #define HX8357_DISPOFF 0x28
 #define HX8357_DISPON  0x29
@@ -93,41 +105,33 @@ int spi_cs_fd;
 
 #define HX8357B_SETDISPMODE  0xB4
 #define HX8357D_SETCYC  0xB4
-#define HX8357B_SETOTP  0xB7
-#define HX8357D_SETC  0xB9
+#define HX8357B_SETOTP 0xB7
+#define HX8357D_SETC 0xB9
 
-#define HX8357B_SET_PANEL_DRIVING  0xC0
-#define HX8357D_SETSTBA  0xC0
+#define HX8357B_SET_PANEL_DRIVING 0xC0
+#define HX8357D_SETSTBA 0xC0
 #define HX8357B_SETDGC  0xC1
 #define HX8357B_SETID  0xC3
 #define HX8357B_SETDDB  0xC4
-#define HX8357B_SETDISPLAYFRAME  0xC5
+#define HX8357B_SETDISPLAYFRAME 0xC5
 #define HX8357B_GAMMASET 0xC8
 #define HX8357B_SETCABC  0xC9
 #define HX8357_SETPANEL  0xCC
 
-#define HX8357B_SETPOWER  0xD0
-#define HX8357B_SETVCOM  0xD1
-#define HX8357B_SETPWRNORMAL  0xD2
+
+#define HX8357B_SETPOWER 0xD0
+#define HX8357B_SETVCOM 0xD1
+#define HX8357B_SETPWRNORMAL 0xD2
 
 #define HX8357B_RDID1   0xDA
 #define HX8357B_RDID2   0xDB
-#define HX8357B_RDID3  0xDC
+#define HX8357B_RDID3   0xDC
 #define HX8357B_RDID4   0xDD
 
-#define HX8357D_SETGAMMA  0xE0
+#define HX8357D_SETGAMMA 0xE0
 
-#define HX8357B_SETGAMMA  0xC8
+#define HX8357B_SETGAMMA 0xC8
 #define HX8357B_SETPANELRELATED  0xE9
-
-#define HX8357_BLACK   0x0000
-#define HX8357_BLUE    0x001F
-#define HX8357_RED     0xF800
-#define HX8357_GREEN   0x07E0
-#define HX8357_CYAN    0x07FF
-#define HX8357_MAGENTA 0xF81F
-#define HX8357_YELLOW  0xFFE0  
-#define HX8357_WHITE   0xFFFF
 
 #define true HIGH
 #define false LOW
@@ -136,12 +140,16 @@ void SetPin(uint8_t pinNumber, uint8_t value)
 {
 	digitalWrite(pinNumber, value);
 }
+
 uint8_t temp = 0;
+uint8_t outdata = 0;
 void WriteByte(uint8_t value, uint8_t data)
 {
 	SetPin(DC, data);
-//	uint8_t temp;
-	transfer(spi_cs_fd, &value, &temp);
+	//uint8_t temp;
+	//temp = value;
+	wiringPiSPIDataRW(0, &value, 1);
+	//transfer(spi_cs_fd, &outdata, &temp);
 }
 void WriteCmd(uint8_t value)
 {
@@ -316,37 +324,57 @@ void WriteWord (uint16_t value)
 }*/
 
 
-void Write888(uint32_t value, uint8_t width, uint8_t count)
+void Write888(uint32_t value, uint16_t width, uint16_t count)
 {
 	//"sends a 24-bit RGB pixel data to display, with optional repeat"
-	/*uint8_t red = value>>16; //#red = upper 8 bits
+	uint8_t red = value>>16; //#red = upper 8 bits
 	uint8_t green = (value>>8) & 0xFF; //#green = middle 8 bits
 	uint8_t blue = value & 0xFF; //#blue = lower 8 bits
-	uint8_t RGB = [red,green,blue]; //#assemble RGB as= byte list
 	SetPin(DC,1);
-	for a in range(count):
-		spi.writebytes(RGB*width)*/
+	int a;
+	for(a = 0; a < width*count;a++)
+	{
+		WriteByte(red,true);
+		WriteByte(green,true);
+		WriteByte(blue,true);
+	}
 }
 
 //ST7735 driver routines:
 void InitDisplay()
 {
 	HX_SWRESET();
+	printf("1\n");
 	HX_SETC();
+	printf("2\n");
 	HX_SETRGB();
+	printf("3\n");
 	HX_SETCOM();
+	printf("4\n");
 	HX_SETOSC();
+	printf("5\n");
 	HX_SETPANEL();
+	printf("6\n");
 	HX_SETPWR1();
+	printf("7\n");
 	HX_SETSTBA();
+	printf("8\n");
 	HX_SETCYC();
+	printf("9\n");
 	HX_SETGAMMA();
+	printf("10\n");
 	HX_COLMOD();
+	printf("11\n");
 	HX_MADCTL();
+	printf("12\n");
 	HX_TEON();
+	printf("13\n");
 	HX_TEARLINE();
+	printf("14\n");
 	HX_SLPOUT();
+	printf("15\n");
 	HX_DISPON();
+	printf("16\n");
 }
 
 void SetAddrWindow(uint16_t x0, uint16_t y0, uint16_t x1, uint16_t y1)
@@ -360,11 +388,11 @@ void SetAddrWindow(uint16_t x0, uint16_t y0, uint16_t x1, uint16_t y1)
 	WriteWord(y1);
 }
 
-void FillRect(uint8_t x0, uint8_t y0, uint8_t x1, uint8_t y1, uint32_t color)
+void FillRect(uint16_t x0, uint16_t y0, uint16_t x1, uint16_t y1, uint32_t color)
 {
 	//"fills rectangle with given color"
-	uint8_t width = x1 - x0 + 1;
-	uint8_t height = y1 - y0 + 1;
+	uint16_t width = x1 - x0 + 1;
+	uint16_t height = y1 - y0 + 1;
 	SetAddrWindow(x0, y0, x1, y1);
 	WriteCmd(RAMWR);
 	Write888(color, width ,height);
@@ -399,13 +427,11 @@ void FillRect(uint8_t x0, uint8_t y0, uint8_t x1, uint8_t y1, uint32_t color)
 
 void SetPixel()
 {
-	SetAddrWindow(1, 1,2,2);
+	SetAddrWindow(5, 5,6, 6);
 	WriteCmd(RAMWR);
 	WriteByte(0xFF, true);
-	WriteByte(0x00, true);
-	WriteByte(0x00, true);
-		
-	
+	WriteByte(0xff, true);
+	WriteByte(0xff, true);
 }
 
 int main(void)
@@ -422,14 +448,20 @@ int main(void)
 	//spi_set_delay(int);
 	//spiOpen(const char*);
 	//spiClose(int);
-	spi_cs_fd = (spiOpen("/dev/spidev0.0"));
-	spi_init(spi_cs_fd);
-	printSpiDetails();
+	//spi_cs_fd = (spiOpen("/dev/spidev0.0"));
+	//spi_init(spi_cs_fd);
+	//printSpiDetails();
+	wiringPiSPISetup (0, 25000000);
+
 	InitDisplay();
+	FillRect(0,0,319,479,BLACK);
+	FillRect(100,100,150,150,GREEN);
+	printf("asd\n");
 	SetPixel();
 
-	for(;;)
+	/*for(;;)
 	{
 
-	}
+	}*/
+	return 0;
 }

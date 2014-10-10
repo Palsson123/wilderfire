@@ -4,7 +4,7 @@
 //static const char *spi_device = "/dev/spidev0.0";
 uint8_t spi_mode = 0;
 uint8_t spi_bits = 8;
-uint32_t spi_speed = 500000;
+uint32_t spi_speed = 5000000;
 uint16_t spi_delay = 0;
 
 
