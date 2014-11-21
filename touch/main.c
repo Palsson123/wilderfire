@@ -5,56 +5,27 @@
 #include "STMPE610.h"
 #define STMPE_CS 10
 
+//Fixad
 void writeRegister8(uint8_t reg, uint8_t val) {
-	if (_CLK == -1){
-		SPI.beginTransaction(mySPISettings);
-	}
 	digitalWrite(_CS, LOW);
 	spiOut(reg); 
 	spiOut(val);
 	digitalWrite(_CS, HIGH);
-	if (_CLK == -1){
-		SPI.endTransaction();
-	}
-}
 }
 
-
+//Fixad
 void Adafruit_STMPE610(uint8_t cspin) {
 	_CS = cspin;
 	_MOSI = _MISO = _CLK = -1;
-  	SPI.begin();	// fixa
-  	m_spiMode = SPI_MODE0; //fixa
-  	initSPI(); // mySPISettings = SPISettings(1000000, MSBFIRST, SPI_MODE0); // fixa
+  	wiringPiSPISetup (0, 1000000);
   }
 
-
-
-  void begin(uint8_t i2caddr) {
-  	if (_CS != -1 && _CLK == -1) {
+//Fixad
+void begin() {  	
     // hardware SPI
-  		pinMode(_CS, OUTPUT);
-  		digitalWrite(_CS, HIGH);
-  		SPI.begin();
-  		mySPISettings = SPISettings(1000000, MSBFIRST, SPI_MODE0);
-
-  		m_spiMode = SPI_MODE0;
-  	}
-
-  // try mode0
-  	if (getVersion() != 0x811) {
-  		if (_CS != -1 && _CLK == -1) {
-      //Serial.println("try MODE1");
-  			mySPISettings = SPISettings(1000000, MSBFIRST, SPI_MODE1);
-  			m_spiMode = SPI_MODE1;
-
-  			if (getVersion() != 0x811) {
-  				return false;
-  			}
-  		} else {
-  			return false;
-  		}
-  	}
+	pinMode(_CS, OUTPUT);
+	digitalWrite(_CS, HIGH);
+		
 
   	writeRegister8(STMPE_SYS_CTRL1, STMPE_SYS_CTRL1_RESET);
   	delay(10);
@@ -103,12 +74,7 @@ uint16_t getVersion() {
 }
 
 
-int main(void)
-{
-	Adafruit_STMPE610(cspin);
-	begin();
-	writeRegister8(uint8_t reg, uint8_t val);
-}
+
 
 
 
@@ -136,80 +102,64 @@ void readData(uint16_t *x, uint16_t *y, uint8_t *z) {
 
 
 uint8_t spiIn() {
-	if (_CLK == -1) {
-		uint8_t d = SPI.transfer(0);
+		uint8_t d=0;
+		wiringPiSPIDataRW(0, &d, 1);
 		return d;
-	}
-	else
-		return shiftIn(_MISO, _CLK, MSBFIRST);
+	
 }
 
 
 void spiOut(uint8_t x) {  
-	if (_CLK == -1) {
-		SPI.transfer(x);
-	}
-	else
-		shiftOut(_MOSI, _CLK, MSBFIRST, x);
+		wiringPiSPIDataRW(0, &x, 1);
 }
 
 
-
+//Fixad
 uint8_t readRegister8(uint8_t reg) {
 	uint8_t x ;
 
-	if (_CLK == -1){
-		SPI.beginTransaction(mySPISettings);
-	} 
+	SPI.beginTransaction(mySPISettings);
+	
+	digitalWrite(_CS, LOW);
+	reg |= 0x80;
+	spiOut(reg);
+	spiOut(0x00);
+	x = spiIn(); 
+	digitalWrite(_CS, HIGH);
+	return x;
+}
+
+//Fixad
+uint16_t readRegister16(uint8_t reg) {
+	uint16_t x;
+    // hardware SPI
 	digitalWrite(_CS, LOW);
 	spiOut(0x80 | reg); 
 	spiOut(0x00);
 	x = spiIn(); 
+	x<<=8;
+	x |= spiIn(); 
 	digitalWrite(_CS, HIGH);
-
-	if (_CLK == -1){
-		SPI.endTransaction();
-	} 
 	return x;
 }
-
-
-uint16_t readRegister16(uint8_t reg) {
-	uint16_t x;
-	if (_CLK == -1) {
-    // hardware SPI
-		if (_CLK == -1) {
-			SPI.beginTransaction(mySPISettings);
-		}
-		digitalWrite(_CS, LOW);
-		spiOut(0x80 | reg); 
-		spiOut(0x00);
-		x = spiIn(); 
-		x<<=8;
-		x |= spiIn(); 
-		digitalWrite(_CS, HIGH);
-		if (_CLK == -1) {
-			SPI.endTransaction();
-		}
-
-	}
-  //Serial.print("$"); Serial.print(reg, HEX); 
-  //Serial.print(": 0x"); Serial.println(x, HEX);
-	return x;
-}
-
+//Fixad
 void writeRegister8(uint8_t reg, uint8_t val) {
 
-	if (_CLK == -1) {
-		SPI.beginTransaction(mySPISettings);
-	}
+	
 	digitalWrite(_CS, LOW);
 	spiOut(reg); 
 	spiOut(val);
 	digitalWrite(_CS, HIGH);
-	if (_CLK == -1) {
-		SPI.endTransaction();
+	
 	}
+delay(10);
+}
+
+int main(void)
+{
+	Adafruit_STMPE610(cspin);
+	begin();
+	
 
 
 	uint16_t x, y;
@@ -217,18 +167,15 @@ void writeRegister8(uint8_t reg, uint8_t val) {
 	if (touched()) {
     // read x & y & z;
 		while (!bufferEmpty()) {
-			print(bufferSize());
+			printf("%d", bufferSize());
 			readData(&x, &y, &z);
-			print("->("); 
-			print(x); 
-			print(", "); 
-			print(y); 
-			print(", "); 
-			print(z);
-			println(")");
+			printf("->("); 
+			printf("%d", x); 
+			printf(", "); 
+			printf("%d", y); 
+			printf(", "); 
+			printf("%d", z);
+			printf(")\n");
 			}
     	writeRegister8(STMPE_INT_STA, 0xFF); // reset all ints
-	}
-delay(10);
 }
-
